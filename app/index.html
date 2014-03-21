@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>JavaScript Libraries Sandbox</title>
+  <meta name="description" content="Play with arbitary libraries hosted on cdnjs">
+  <meta name="viewport" content="width=device-width">
+</head>
+<body>
+Just open the developer console!
+<script>
+new function () {
+  println('*** WELCOME TO JAVASCRIPT LIBRARIES SANDBOX ***');
+  println('Loads arbitary libraries on cdnjs <http://cdnjs.com/>.');
+  println(s('For example: jQuery + underscore <{url}>', { url: location.href.replace(/(\?.*)?$/, '?jquery,underscore') }));
+
+  function println (message) {
+    console.log(message);
+  }
+
+  function s (template, vars) {
+    return template.replace(/{(.+?)}/g, function (_, $1) {
+      return vars[$1];
+    });
+  }
+
+  function loadScript (scriptUrl, onload) {
+    var script = document.createElement('script');
+    script.setAttribute('src', scriptUrl);
+    script.onload = onload;
+    document.body.appendChild(script);
+  }
+
+  function functionNamedOnce (func) {
+    functionNamedOnce.id = functionNamedOnce.id || 0;
+
+    var name = '__function_' + ++functionNamedOnce.id;
+    window[name] = function () {
+      if (window[name] === arguments.callee) delete window[name];
+      return func.apply(this, arguments);
+    };
+    return name;
+  }
+
+  function load (name) {
+    var packageInfoCallback = function (res) {
+      var packageInfo = JSON.parse(atob(res.data.content));
+      var scriptUrl = s('//cdnjs.cloudflare.com/ajax/libs/{name}/{version}/{filename}', packageInfo);
+      loadScript(scriptUrl, function () {
+        println(s(' --> {name} ({filename}) {version} loaded', packageInfo));
+      });
+    };
+    var packageInfoJSONP = s(
+      'https://api.github.com/repos/cdnjs/cdnjs/contents/ajax/libs/{name}/package.json?callback={callback}', {
+        name: name,
+        callback: functionNamedOnce(packageInfoCallback)
+      }
+    );
+    loadScript(packageInfoJSONP);
+  }
+
+  var names = location.search.substring(1).split(/,/);
+  for (var i = 0, name = names[0]; name; name = names[++i]) if (name.length > 0) {
+    load(name);
+  }
+}
+</script>
+</body>
+</html>
