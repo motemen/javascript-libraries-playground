@@ -7,12 +7,11 @@
   <meta name="viewport" content="width=device-width">
 </head>
 <body>
-Just open the developer console!
+<p>Just open the developer console!</p>
+<ul id="libs"></ul>
 <script>
 new function () {
   println('*** WELCOME TO JAVASCRIPT LIBRARIES SANDBOX ***');
-  println('Loads arbitary libraries on cdnjs <http://cdnjs.com/>.');
-  println(s('For example: jQuery + underscore <{url}>', { url: location.href.replace(/(\?.*)?$/, '?jquery,underscore') }));
 
   function println (message) {
     console.log(message);
@@ -42,12 +41,24 @@ new function () {
     return name;
   }
 
-  function load (name) {
+  function load (lib, li) {
+    var nameAndVersion = lib.split(/@/, 2);
+    var name    = nameAndVersion[0],
+        version = nameAndVersion[1];
     var packageInfoCallback = function (res) {
+      if (!res.data.content) {
+        li.appendChild(document.createTextNode('failed'));
+        throw s('Could not get information of {lib}', { lib: lib });
+      }
+
       var packageInfo = JSON.parse(atob(res.data.content));
+      if (version) packageInfo.version = version;
       var scriptUrl = s('//cdnjs.cloudflare.com/ajax/libs/{name}/{version}/{filename}', packageInfo);
       loadScript(scriptUrl, function () {
         println(s(' --> {name} ({filename}) {version} loaded', packageInfo));
+
+        while (li.firstChild) li.removeChild(li.firstChild);
+        li.appendChild(document.createTextNode(s('Loaded {lib} (version {version})', { lib: lib, version: packageInfo.version })));
       });
     };
     var packageInfoJSONP = s(
@@ -59,9 +70,18 @@ new function () {
     loadScript(packageInfoJSONP);
   }
 
-  var names = location.search.substring(1).split(/,/);
-  for (var i = 0, name = names[0]; name; name = names[++i]) if (name.length > 0) {
-    load(name);
+  var libs = location.search.substring(1).split(/,/);
+  var libsElement = document.querySelector('#libs');
+  for (var i = 0, lib = libs[0]; lib; lib = libs[++i]) if (lib.length > 0) {
+    var li = document.createElement('li');
+        li.appendChild(document.createTextNode(s('Loading {lib} … ', { lib: lib })));
+    libsElement.appendChild(li);
+
+    load(lib, li);
+  }
+  if (libsElement.childNodes.length === 0) {
+    println('Loads arbitary libraries on cdnjs <http://cdnjs.com/>.');
+    println(s('For example: jQuery 2.1.0 + underscore <{url}>', { url: location.href.replace(/(\?.*)?$/, '?jquery@2.1.0,underscore.js') }));
   }
 }
 </script>
