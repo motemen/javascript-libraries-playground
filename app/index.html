@@ -50,29 +50,44 @@ new function () {
     var nameAndVersion = lib.split(/@/, 2);
     var name    = nameAndVersion[0],
         version = nameAndVersion[1];
-    var packageInfoCallback = function (res) {
-      if (!res.data.content) {
-        li.appendChild(document.createTextNode('failed'));
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', s('http://api.jsdelivr.com/v1/jsdelivr/libraries?name={lib}&fields=mainfile,versions,homepage', { lib: name }), true);
+    xhr.onload = function () {
+      var matches = JSON.parse(xhr.responseText);
+      var firstMatch = matches[0];
+      if (!firstMatch) {
         throw s('Could not get information of {lib}', { lib: lib });
       }
-
-      var packageInfo = JSON.parse(atob(res.data.content));
-      if (version) packageInfo.version = version;
-      var scriptUrl = s('//cdnjs.cloudflare.com/ajax/libs/{name}/{version}/{filename}', packageInfo);
+      var packageInfo = {
+        name: name,
+        version: version ? version : firstMatch.versions[0],
+        filename: firstMatch.mainfile,
+        homepage: firstMatch.homepage
+      };
+      var scriptUrl = s('//cdn.jsdelivr.net/{name}/{version}/{filename}', packageInfo);
       loadScript(scriptUrl, function () {
-        println(s(' --> {name} ({filename}) {version} loaded', packageInfo));
+        println(s('---> {name} ({filename}) {version} loaded', packageInfo));
 
         while (li.firstChild) li.removeChild(li.firstChild);
-        li.appendChild(document.createTextNode(s('Loaded {lib} (version {version})', { lib: lib, version: packageInfo.version })));
+
+        if (packageInfo.homepage) {
+          var link = document.createElement('a');
+          link.href = packageInfo.homepage;
+          link.appendChild(document.createTextNode(lib));
+
+          li.appendChild(document.createTextNode('Loaded '));
+          li.appendChild(link);
+          li.appendChild(document.createTextNode(s(' (version {version})', { version: packageInfo.version })));
+        } else {
+          li.appendChild(document.createTextNode(s('Loaded {lib} (version {version})', { lib: lib, version: packageInfo.version })));
+        }
       });
     };
-    var packageInfoJSONP = s(
-      'https://api.github.com/repos/cdnjs/cdnjs/contents/ajax/libs/{name}/package.json?callback={callback}', {
-        name: name,
-        callback: functionNamedOnce(packageInfoCallback)
-      }
-    );
-    loadScript(packageInfoJSONP);
+    xhr.onerror = function () {
+      throw s('Could not get information of {lib}', { lib: lib });
+    };
+    xhr.send();
   }
 
   var libs = location.search.substring(1).split(/,/);
@@ -86,7 +101,7 @@ new function () {
   }
   if (libsElement.childNodes.length === 0) {
     println('Loads arbitary libraries on cdnjs <http://cdnjs.com/>.');
-    println(s('For example: jQuery 2.1.0 + underscore <{url}>', { url: location.href.replace(/(\?.*)?$/, '?jquery@2.1.0,underscore.js') }));
+    println(s('For example: jQuery 2.1.0 + underscore <{url}>', { url: location.href.replace(/(\?.*)?$/, '?jquery@2.1.0,underscorejs') }));
   }
 }
 </script>
