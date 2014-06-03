@@ -1,0 +1,33 @@
+{
+  "name": "javascript-libraries-playground",
+  "version": "0.0.0",
+  "description": "Play with arbitary JavaScript libraries hosted on cdnjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "webdriver-manager update && protractor test/protractor.conf.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/motemen/javascript-libraries-playground"
+  },
+  "author": "motemen <motemen@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/motemen/javascript-libraries-playground/issues"
+  },
+  "homepage": "https://github.com/motemen/javascript-libraries-playground",
+  "private": true,
+  "devDependencies": {
+    "selenium-webdriver": "^2.40.0",
+    "ecstatic": "^0.4.13",
+    "protractor": "^0.23.1"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "ecstatic": "~0.4.13",
+    "protractor": "~0.23.1",
+    "selenium-webdriver": "~2.40.0"
+  }
+}
